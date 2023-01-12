@@ -1,39 +1,48 @@
-# Asura scans
-# Mangakakalot
-# ReaperScans
-# Flamescans
 import re
 
 from bs4 import BeautifulSoup
-import soupsieve as sv
 import requests
 
-pageUrl = "https://manganato.com/advanced_search?s=all&page=1"
+# DEAFAULTS
+"""
+page = 1
+orby = ''  az, newest, topview
+keyw = ''  keyword to search for comic title
+"""
 
-webData = requests.get(pageUrl).content
 
-soup = BeautifulSoup(webData, 'html.parser')
+def extract_url_data(page=1, orby='', keyw=''):
+    page_url = f"https://manganato.com/advanced_search?s=all&page={page}&orby={orby}&keyw={keyw}"
+    webData = requests.get(page_url).content
 
-comicData = sv.select(".content-genres-item", soup)
+    soup = BeautifulSoup(webData, 'html.parser')
+
+    comicData = soup.find_all("div", class_="content-genres-item")
+    return comicData
 
 
-def extract_meta_data(div):
-    comic_img = div.find(class_="img-loading")['src']
-    comic_name_info = div.find(class_="genres-item-name")
-    comic_name = comic_name_info.get_text()
-    comic_link = comic_name_info['href']
-    comic_author = div.find(class_="genres-item-author").get_text()
-    comic_description = div.find(class_="genres-item-description").get_text()
-    comic_views = div.find(class_="genres-item-view").get_text()
+def extract_meta_data(data):
+    all_comic_list = []
 
-    return {
-        'name': comic_name,
-        'image': comic_img,
-        'link': comic_link,
-        'author': comic_author,
-        'views': comic_views,
-        'description': comic_description
-    }
+    for div in data:
+        comic_img = div.find(class_="img-loading")['src']
+        comic_name_info = div.find(class_="genres-item-name")
+        comic_name = comic_name_info.get_text()
+        comic_link = comic_name_info['href']
+        comic_author = div.find(class_="genres-item-author").get_text()
+        comic_description = div.find(class_="genres-item-description").get_text()
+        comic_views = div.find(class_="genres-item-view").get_text()
+
+        all_comic_list.append({
+            'name': comic_name,
+            'image': comic_img,
+            'link': comic_link,
+            'author': comic_author,
+            'views': comic_views,
+            'description': comic_description
+        })
+
+    return all_comic_list
 
 
 def extract_comic_pages(comic_page_link):
@@ -67,6 +76,3 @@ def extract_comic_images(chapter_link):
               ).url)
 
     return image_urls
-
-
-extract_comic_images(extract_comic_pages(extract_meta_data(comicData[0])['link'])[0]['link'])
