@@ -29,7 +29,7 @@ async def extract_meta_data(url):
         soup = BeautifulSoup(webData, 'html.parser')
 
         comicData = soup.find_all("div", class_="content-genres-item")
-        for div in comicData[:2]:
+        for div in comicData:
             comic_img = div.find(class_="img-loading")['src']
             comic_name_info = div.find(class_="genres-item-name")
             comic_name = comic_name_info.get_text()
