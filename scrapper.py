@@ -1,4 +1,7 @@
 import re
+import asyncio
+import aiohttp
+import time
 
 from bs4 import BeautifulSoup
 import requests
@@ -11,68 +14,73 @@ keyw = ''  keyword to search for comic title
 """
 
 
-def extract_url_data(page=1, orby='', keyw=''):
+def format_url(page=1, orby='', keyw=''):
     page_url = f"https://manganato.com/advanced_search?s=all&page={page}&orby={orby}&keyw={keyw}"
-    webData = requests.get(page_url).content
-
-    soup = BeautifulSoup(webData, 'html.parser')
-
-    comicData = soup.find_all("div", class_="content-genres-item")
-    return comicData
+    return page_url
 
 
-def extract_meta_data(data):
+async def extract_meta_data(url):
     all_comic_list = []
 
-    for div in data:
-        comic_img = div.find(class_="img-loading")['src']
-        comic_name_info = div.find(class_="genres-item-name")
-        comic_name = comic_name_info.get_text()
-        comic_link = comic_name_info['href']
-        comic_author = div.find(class_="genres-item-author").get_text()
-        comic_description = div.find(class_="genres-item-description").get_text()
-        comic_views = div.find(class_="genres-item-view").get_text()
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            webData = await resp.text()
 
-        all_comic_list.append({
-            'name': comic_name,
-            'image': comic_img,
-            'link': comic_link,
-            'author': comic_author,
-            'views': comic_views,
-            'description': comic_description
-        })
+        soup = BeautifulSoup(webData, 'html.parser')
 
+        comicData = soup.find_all("div", class_="content-genres-item")
+        for div in comicData[:2]:
+            comic_img = div.find(class_="img-loading")['src']
+            comic_name_info = div.find(class_="genres-item-name")
+            comic_name = comic_name_info.get_text()
+            comic_link = comic_name_info['href']
+            comic_author = div.find(class_="genres-item-author").get_text()
+            comic_description = div.find(class_="genres-item-description").get_text()
+            comic_views = div.find(class_="genres-item-view").get_text()
+
+            chapter_list = await extract_comic_pages(session, comic_link)
+
+            all_comic_list.append({
+                'title': comic_name,
+                'metadata': {
+                    'image': comic_img,
+                    'link': comic_link,
+                    'author': comic_author,
+                    'views': comic_views,
+                    'description': comic_description
+                },
+                'chapters': chapter_list,
+            })
     return all_comic_list
 
 
-def extract_comic_pages(comic_page_link):
-    comic_page_data = requests.get(comic_page_link).content
+async def extract_comic_pages(session, comic_page_link):
+    async with session.get(comic_page_link) as resp:
+        comic_page_data = await resp.text()
+        comic_soup = BeautifulSoup(comic_page_data, "html.parser")
 
-    comic_soup = BeautifulSoup(comic_page_data, "html.parser")
+        comic_chapter_data = comic_soup.find_all('a', class_="chapter-name")
 
-    comic_chapter_data = comic_soup.find_all('a', class_="chapter-name")
+        full_chapters = []
 
-    full_chapters = []
-
-    for chapters in comic_chapter_data:
-        chapter_name = chapters['title']
-        chapter_link = chapters['href']
-        full_chapters.append({'name': chapter_name, 'link': chapter_link})
+        for chapters in comic_chapter_data:
+            chapter_name = chapters['title']
+            chapter_link = chapters['href']
+            full_chapters.append({'name': chapter_name, 'link': chapter_link})
 
     return full_chapters
 
 
-def extract_comic_images(chapter_link):
-    comic_image_data = requests.get(chapter_link).content
+async def extract_comic_images(session, chapter_link):
+    async with session.get(chapter_link) as resp:
+        comic_image_data = resp.text()
+        image_soup = BeautifulSoup(comic_image_data, "html.parser")
 
-    image_soup = BeautifulSoup(comic_image_data, "html.parser")
+        image_tags = image_soup.find_all('img', src=re.compile('mkklcdnv'))
 
-    image_urls = image_soup.find_all('img', src=re.compile('mkklcdnv'))
+        image_urls = {}
 
-    for url in image_urls:
-        print(requests.get(
-                  url['src'],
-                  headers={"referer": chapter_link}
-              ).url)
+        for page_no, url in enumerate(image_tags):
+            image_urls[page_no] = url['src']
 
     return image_urls

@@ -10,10 +10,12 @@ def home():
     return 'Hello World'
 
 
-@app.route("/v1/comics/all/", defaults={'order': None, 'page': 1})
-@app.route("/v1/comics/all/<string:order>/<int:page>", methods=['GET', 'POST'])
-def all_comics(page, order):
-    return jsonify(scrapper.extract_meta_data(scrapper.extract_url_data(orby=order, page=page)))
+@app.route("/api/v1/comics/all/", defaults={'page': 1, 'order': ''})
+@app.route("/api/v1/comics/all/<int:page>", defaults={'order': ''})
+@app.route("/api/v1/comics/all/<order>/<int:page>/", methods=['GET'])
+async def all_comics(page, order):
+    data = await scrapper.extract_meta_data(scrapper.format_url(orby=order, page=page))
+    return jsonify(data)
 
 
 if __name__ == "__main__":
