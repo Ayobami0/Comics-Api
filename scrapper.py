@@ -41,8 +41,6 @@ async def extract_meta_data(url):
         comic_description = div.find(class_="genres-item-description").get_text()
         comic_views = div.find(class_="genres-item-view").get_text()
 
-        # chapter_list = await extract_comic_pages(session, comic_link)
-
         all_comic_list.append({
             'title': comic_name,
             'id': comic_id,
