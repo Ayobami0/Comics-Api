@@ -12,7 +12,7 @@ def home():
 
 @app.route("/api/v1/comics/all/")
 async def all_comics():
-    page = int(request.args.get('page'))
+    page = request.args.get('page')
     order = request.args.get('sortby')
     search = request.args.get('s')
     data = await scrapper.extract_meta_data(scrapper.format_url(orby=order, page=page, keyw=search))
