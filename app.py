@@ -10,11 +10,19 @@ def home():
     return 'Hello World'
 
 
-@app.route("/api/v1/comics/all/", defaults={'page': 1, 'order': ''})
-@app.route("/api/v1/comics/all/<int:page>", defaults={'order': ''})
-@app.route("/api/v1/comics/all/<order>/<int:page>/", methods=['GET'])
-async def all_comics(page, order):
-    data = await scrapper.extract_meta_data(scrapper.format_url(orby=order, page=page))
+@app.route("/api/v1/comics/all/")
+async def all_comics():
+    page = int(request.args.get('page'))
+    order = request.args.get('sortby')
+    search = request.args.get('s')
+    data = await scrapper.extract_meta_data(scrapper.format_url(orby=order, page=page, keyw=search))
+    return jsonify(data)
+
+
+@app.route("/api/v1/comic/read/chapters/<string:id>")
+async def comic_chapter(id):
+    chapter = request.args.get('chap')
+    data = await scrapper.extract_comic_pages(id, chapter)
     return jsonify(data)
 
 
