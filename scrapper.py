@@ -13,7 +13,7 @@ keyw = ''  keyword to search for comic title
 
 
 def format_url(page=1, orby="", keyw=""):
-    page_url = f"https://manganato.com/advanced_search?s=all&page={page}&orby={orby}&keyw={keyw}"
+    page_url = f"https://manganato.com/advanced_search?s=all&page={page}&g_e=_41_42_36_47_48_&orby={orby}&keyw={keyw}"
     return page_url
 
 
