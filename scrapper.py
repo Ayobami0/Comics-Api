@@ -70,14 +70,11 @@ async def extract_comic_pages(comic_id, chapter=None):
     comic_soup = BeautifulSoup(comic_page_data, "html.parser")
 
     comic_chapter_data = comic_soup.find_all("a", class_="chapter-name")
-    comic_add_info = {}
     info = comic_soup.find_all("td", class_="table-value")
-    comic_add_info["alternative"] = info[0].get_text()
-    comic_add_info["authors"] = [
-        author.get_text() for author in info[1].find_all("a")]
-    comic_add_info["status"] = info[2].get_text()
-    comic_add_info["genres"] = [
-        genre.get_text() for genre in info[3].find_all("a")]
+    comic_alternative_name = info[0].get_text()
+    comic_authors = [author.get_text() for author in info[1].find_all("a")]
+    comic_status = info[2].get_text()
+    comic_genres = [genre.get_text() for genre in info[3].find_all("a")]
 
     comic_rating = comic_soup.find(
         "em", attrs={"property": "v:average"}).get_text()
@@ -91,9 +88,11 @@ async def extract_comic_pages(comic_id, chapter=None):
         "rating": comic_rating,
         "chapters": [],
         "description": comic_description,
-        "additional_info": comic_add_info,
-        "full_description": comic_description,
         "updated_time": comic_updated_time,
+        "alternative": comic_alternative_name,
+        "authors": comic_authors,
+        "status": comic_status,
+        "genres": comic_genres
     }
 
     # loops through chapter
