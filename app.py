@@ -15,14 +15,21 @@ async def all_comics():
     page = request.args.get('page')
     order = request.args.get('sortby')
     search = request.args.get('s')
-    data = await scrapper.extract_meta_data(scrapper.format_url(orby=order, page=page, keyw=search))
+    data = await scrapper.extract_meta_data(
+        scrapper.format_url(
+            orby=order,
+            page=page,
+            keyw=search))
     return jsonify(data)
 
 
 @app.route("/api/v1/comic/read/chapters/<string:id>")
 async def comic_chapter(id):
+    # chap - query parameter(int)
     chapter = request.args.get('chap')
-    data = await scrapper.extract_comic_pages(id, chapter)
+    data = await scrapper.extract_comic_pages(
+        id,
+        chapter)
     return jsonify(data)
 
 
